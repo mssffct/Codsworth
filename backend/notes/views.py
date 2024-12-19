@@ -4,5 +4,5 @@ from starlette.endpoints import HTTPEndpoint
 
 class Note(HTTPEndpoint):
 
-    async def notes_list(self, request):
+    async def get(self, request):
         return JSONResponse({})

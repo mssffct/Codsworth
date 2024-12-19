@@ -4,5 +4,5 @@ from starlette.endpoints import HTTPEndpoint
 
 class Event(HTTPEndpoint):
 
-    async def events_list(self, request):
+    async def get(self, request):
         return JSONResponse({})

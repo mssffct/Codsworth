@@ -6,8 +6,8 @@ from starlette.routing import Route, Mount
 from starlette.staticfiles import StaticFiles
 
 routes = [
-    Mount('/event', routes=event_routes),
-    Mount('/note', routes=note_routes),
-    Mount('/vault', routes=vault_routes),
+    Mount('/events', routes=event_routes),
+    Mount('/notes', routes=note_routes),
+    Mount('/vaults', routes=vault_routes),
     Mount('/static', app=StaticFiles(directory='statics'), name='static')
 ]

@@ -4,5 +4,5 @@ from starlette.endpoints import HTTPEndpoint
 
 class Vault(HTTPEndpoint):
 
-    async def deposit_boxes_list(self, request):
+    async def get(self, request):
         return JSONResponse({})

@@ -1,0 +1,38 @@
+services:
+  codsworth_api:
+    restart: always
+    container_name: codsworth_api
+    build:
+      context: .
+    environment:
+      INSIDE_DOCKER: 1
+    env_file: .env
+    ports:
+      - ${API_PORT}:${API_PORT}
+    depends_on:
+      - codsworth_db
+    networks:
+      - main
+
+  codsworth_db:
+    image: postgres:13.4
+    container_name: codsworth_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p ${POSTGRES_PORT}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: -p ${POSTGRES_PORT}
+    networks:
+      - main
+
+networks:
+  main:
+    driver: bridge
