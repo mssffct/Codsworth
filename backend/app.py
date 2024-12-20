@@ -1,7 +1,9 @@
 import uvicorn
+import sys
 
 from routes import routes
 from errors import *
+from openapi_schema import schemas
 from config import API_PORT, API_HOST
 from database import database
 
@@ -27,4 +29,9 @@ app = Starlette(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=API_HOST, port=API_PORT)
+    assert sys.argv[-1] in ("run", "schema"), "Usage: example.py [run|schema]"
+
+    if sys.argv[-1] == "run":
+        uvicorn.run(app, host=API_HOST, port=API_PORT)
+    elif sys.argv[-1] == "schema":
+        schema = schemas.get_schema(routes=app.routes)
