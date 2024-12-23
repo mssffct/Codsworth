@@ -30,6 +30,6 @@ if __name__ == "__main__":
     assert sys.argv[-1] in ("run", "schema"), "Usage: example.py [run|schema]"
 
     if sys.argv[-1] == "run":
-        uvicorn.run(app, host=API_HOST, port=int(API_PORT))
+        uvicorn.run("app:app", host=API_HOST, port=int(API_PORT), reload=True)
     elif sys.argv[-1] == "schema":
         print("generating schema")
