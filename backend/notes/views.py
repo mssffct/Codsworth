@@ -1,8 +1,8 @@
-from starlette.responses import JSONResponse
-from starlette.endpoints import HTTPEndpoint
+from litestar import Request, get
+
+from .instances import Note
 
 
-class Note(HTTPEndpoint):
-
-    async def get(self, request):
-        return JSONResponse({})
+@get('/')
+async def list_notes(request: Request) -> Note:
+    return Note(id=1, name="test_note")

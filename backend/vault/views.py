@@ -1,8 +1,8 @@
-from starlette.responses import JSONResponse
-from starlette.endpoints import HTTPEndpoint
+from litestar import Request, get
+
+from .instances import Vault
 
 
-class Vault(HTTPEndpoint):
-
-    async def get(self, request):
-        return JSONResponse({})
+@get('/')
+async def list_vaults(request: Request) -> Vault:
+    return Vault(id=1, name="test_vault")
