@@ -1,7 +1,7 @@
 import uvicorn
 import sys
 
-from config import API_PORT, API_HOST, logging_config
+from config import API_PORT, API_HOST, codsworth_openapi_config
 from exceptions_handlers import *
 
 from events.routers import events_router
@@ -11,7 +11,6 @@ from vaults.routers import vaults_router
 from database import get_db_connection, close_db_connection
 
 from litestar import Litestar
-from litestar.logging.config import LoggingConfig
 from litestar.exceptions import ValidationException, NotFoundException
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -25,7 +24,7 @@ app = Litestar(
         NotFoundException: not_found_handler,
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
     },
-    logging_config=LoggingConfig(str(logging_config())),
+    openapi_config=codsworth_openapi_config
 )
 
 

@@ -1,7 +1,11 @@
 import os
-import sys
+import logging
 
 from dotenv import load_dotenv
+from logging.handlers import RotatingFileHandler
+from litestar.openapi import OpenAPIConfig
+from litestar.openapi.plugins import StoplightRenderPlugin
+
 
 load_dotenv()
 
@@ -17,6 +21,18 @@ DATABASE_USER = os.getenv("POSTGRES_USER")
 DATABASE_DB = os.getenv("POSTGRES_DB")
 
 ##
+# OPENAPI
+##
+codsworth_openapi_config = OpenAPIConfig(
+    title="Codsworth",
+    description="Codsworth API",
+    version="0.0.1",
+    render_plugins=[StoplightRenderPlugin(
+        version="7.7.18", path="/elements"
+    )]
+)
+
+##
 # LOGGING
 ##
 LOGDIR = os.path.join(os.getcwd(), 'log')
@@ -28,80 +44,62 @@ VAULTSFILE = 'vaults.log'
 
 STANDARD_LOG_CONFIG = {
     "level": "INFO",
-    'class': "picologging.handlers.FileHandler",
-    "formater": "verbose",
-    'mode': 'a',
+    'class': "logging.handlers.RotatingFileHandler",
+    "formatter": "verbose",
+
+}
+
+FILEHANDLER_CONFIG = {
+    # 'mode': 'a',
     'maxBytes': 32 * 1024 * 1024,
     'backupCount': 3,
     'encoding': 'utf-8'
 }
 
-def logging_config() -> dict:
-    return {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "default": {
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            },
-            "standard": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
-            "verbose": {"format": '%(levelname)s %(asctime)s %(module)s %(func_name)s %(lineno)d %(message)s'}
-        },
-        "handlers": {
-            "errorsLogHandler": {
-                "level": "ERROR",
-                'class': "picologging.handlers.FileHandler",
-                "formater": "verbose",
-                "filename": LOGDIR + '/' + ERRORFILE,
-                'mode': 'a',
-                'maxBytes': 32 * 1024 * 1024,
-                'backupCount': 3,
-                'encoding': 'utf-8'
-            },
-            "usersLogHandler": {
-                "filename": LOGDIR + '/' + USERSFILE,
-                **STANDARD_LOG_CONFIG
-            },
-            "notesLogHandler": {
-                "filename": LOGDIR + '/' + NOTESFILE,
-                **STANDARD_LOG_CONFIG
-            },
-            "eventsLogHandler": {
-                **STANDARD_LOG_CONFIG,
-                "filename": EVENTSFILE,
-            },
-            "vaultsLogHandler": {
-                "filename": LOGDIR + '/' + VAULTSFILE,
-                **STANDARD_LOG_CONFIG
-            },
-        },
-        "loggers": {
-            "errorsLog": {
-                "handlers": ["errorsLogHandler"],
-                "level": "ERROR",
-                "propagate": False
-            },
-            "usersLog": {
-                "handlers": ["usersLogHandler"],
-                "level": "INFO",
-                "propagate": False
-            },
-            "notesLog": {
-                "handlers": ["notesLogHandler"],
-                "level": "INFO",
-                "propagate": False
-            },
-            "eventsLog": {
-                "handlers": ["eventsLogHandler"],
-                "level": "INFO",
-                "propagate": False
-            },
-            "vaultsLog": {
-                "handlers": ["vaultsLogHandler"],
-                "level": "INFO",
-                "propagate": False
-            }
-        },
-        "log_exceptions": "always",
+FORMATTERS={
+    "default": {
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+    },
+    "standard": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
+    "verbose": logging.Formatter('%(levelname)s %(asctime)s %(module)s %(func_name)s %(lineno)d %(message)s')
+}
+
+LOG_LEVELS = {
+    "errorsLog": logging.ERROR,
+    "eventsLog": logging.INFO,
+    "notesLog": logging.INFO,
+}
+
+LOG_HANDLERS = {
+    "errorsLog": {
+        **FILEHANDLER_CONFIG,
+        "filename": LOGDIR + '/' + ERRORFILE,
+    },
+    "usersLog": {
+        **FILEHANDLER_CONFIG,
+        "filename": LOGDIR + '/' + USERSFILE,
+    },
+    "notesLog": {
+        **FILEHANDLER_CONFIG,
+        "filename": LOGDIR + '/' + NOTESFILE,
+    },
+    "eventsLog": {
+        **FILEHANDLER_CONFIG,
+        "filename": LOGDIR + '/' + EVENTSFILE,
+    },
+    "vaultsLog": {
+        **FILEHANDLER_CONFIG,
+        "filename": LOGDIR + '/' + VAULTSFILE,
     }
+}
+
+
+def get_logger(mod_name: str) -> logging.Logger:
+    """Return logger object."""
+    logger = logging.getLogger(mod_name)
+    handler = RotatingFileHandler(**LOG_HANDLERS.get(mod_name))
+    handler.setFormatter(FORMATTERS.get("verbose"))
+    handler.setLevel(LOG_LEVELS.get(mod_name))
+    logger.addHandler(handler)
+    return logger
