@@ -1,7 +1,7 @@
 import uvicorn
 import sys
 
-from config import API_PORT, API_HOST
+from config import API_PORT, API_HOST, codsworth_openapi_config
 from exceptions_handlers import *
 
 from events.routers import events_router
@@ -24,6 +24,7 @@ app = Litestar(
         NotFoundException: not_found_handler,
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
     },
+    openapi_config=codsworth_openapi_config
 )
 
 

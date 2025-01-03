@@ -1,6 +1,9 @@
 from litestar import Controller, Request, get
 
 from .instances import Event
+from config import get_logger
+
+logger = get_logger('eventsLog')
 
 
 class EventsController(Controller):
@@ -8,4 +11,5 @@ class EventsController(Controller):
 
     @get('/')
     async def list_events(self, request: Request) -> Event:
+        logger.info('hello from events')
         return Event(id=1, name="test_event")
