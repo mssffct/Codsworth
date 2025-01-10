@@ -28,7 +28,7 @@ codsworth_openapi_config = OpenAPIConfig(
     description="Codsworth API",
     version="0.0.1",
     render_plugins=[StoplightRenderPlugin(
-        version="7.7.18", path="/elements"
+        version="7.7.18", path="/"
     )]
 )
 
@@ -42,27 +42,17 @@ NOTESFILE = 'notes.log'
 EVENTSFILE = 'events.log'
 VAULTSFILE = 'vaults.log'
 
-STANDARD_LOG_CONFIG = {
-    "level": "INFO",
-    'class': "logging.handlers.RotatingFileHandler",
-    "formatter": "verbose",
-
-}
 
 FILEHANDLER_CONFIG = {
-    # 'mode': 'a',
+    'mode': 'a',
     'maxBytes': 32 * 1024 * 1024,
     'backupCount': 3,
     'encoding': 'utf-8'
 }
 
-FORMATTERS={
-    "default": {
-        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S",
-    },
-    "standard": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
-    "verbose": logging.Formatter('%(levelname)s %(asctime)s %(module)s %(func_name)s %(lineno)d %(message)s')
+FORMATTERS = {
+    "standard": "%(levelname)s [%(asctime)s] - %(message)s",
+    "verbose": "%(levelname)s [%(asctime)s] :: %(module)s F: [%(funcName)s %(lineno)d] M: [%(message)s]"
 }
 
 LOG_LEVELS = {
@@ -94,12 +84,22 @@ LOG_HANDLERS = {
     }
 }
 
+LOGGING_DATE_FMT = "%d-%m-%Y %H:%M:%S"
 
-def get_logger(mod_name: str) -> logging.Logger:
-    """Return logger object."""
-    logger = logging.getLogger(mod_name)
+def get_logger(mod_name: str, level: str = logging.INFO, formatter: str = "standard") -> logging.Logger:
+    """
+    Args:
+        mod_name: module name
+        level: logging level
+        formatter: string key in FORMATTERS dict ("standard", "verbose", etc.)
+    Returns:
+        logging.Logger
+    """
     handler = RotatingFileHandler(**LOG_HANDLERS.get(mod_name))
-    handler.setFormatter(FORMATTERS.get("verbose"))
-    handler.setLevel(LOG_LEVELS.get(mod_name))
+    fmt = FORMATTERS.get(formatter)
+    handler.setFormatter(logging.Formatter(fmt, LOGGING_DATE_FMT))
+
+    logger = logging.getLogger(mod_name)
+    logger.setLevel(level)
     logger.addHandler(handler)
     return logger

@@ -5,7 +5,7 @@ from litestar import Controller, Request, get
 from .instances import Note
 from config import get_logger
 
-logger = get_logger('notesLog')
+logger = get_logger('notesLog', formatter="verbose")
 
 class NotesController(Controller):
     path = '/notes'
@@ -18,5 +18,4 @@ class NotesController(Controller):
 
     @get('/{note_id:int}')
     async def retrieve_note(self, note_id: int) -> Note:
-        logger.info('note_id')
         return Note(id=1, name="test_note")
