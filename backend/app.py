@@ -8,12 +8,21 @@ from events.routers import events_router
 from notes.routers import notes_router
 from users.routers import users_router
 from vaults.routers import vaults_router
-from database import get_db_connection, close_db_connection
+from database import (
+    get_db_connection,
+    close_db_connection,
+    provide_limit_offset_pagination,
+)
 
 from litestar import Litestar
+from litestar.di import Provide
 from litestar.exceptions import ValidationException, NotFoundException
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
+from litestar.middleware.base import DefineMiddleware
 
+from security.authentication_middleware import JWTAuthenticationMiddleware
+
+auth_mw = DefineMiddleware(JWTAuthenticationMiddleware, exclude="schema")
 
 app = Litestar(
     on_startup=[get_db_connection],
@@ -24,7 +33,9 @@ app = Litestar(
         NotFoundException: not_found_handler,
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
     },
-    openapi_config=codsworth_openapi_config
+    middleware=[auth_mw],
+    openapi_config=codsworth_openapi_config,
+    dependencies={"limit_offset": Provide(provide_limit_offset_pagination)},
 )
 
 

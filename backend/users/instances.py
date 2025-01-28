@@ -1,6 +1,8 @@
-from pydantic import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
+from database import BaseModel
 
 
 class User(BaseModel):
-    id: int
+    id: UUID | None
     name: str
+    fullname: str | None

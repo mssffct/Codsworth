@@ -20,6 +20,8 @@ DATABASE_PASS = os.getenv("POSTGRES_PASSWORD")
 DATABASE_USER = os.getenv("POSTGRES_USER")
 DATABASE_DB = os.getenv("POSTGRES_DB")
 
+JWT_SECRET = os.getenv("JWT_SECRET")
+
 ##
 # OPENAPI
 ##
@@ -53,12 +55,6 @@ FILEHANDLER_CONFIG = {
 FORMATTERS = {
     "standard": "%(levelname)s [%(asctime)s] - %(message)s",
     "verbose": "%(levelname)s [%(asctime)s] :: %(module)s F: [%(funcName)s %(lineno)d] M: [%(message)s]"
-}
-
-LOG_LEVELS = {
-    "errorsLog": logging.ERROR,
-    "eventsLog": logging.INFO,
-    "notesLog": logging.INFO,
 }
 
 LOG_HANDLERS = {

@@ -2,7 +2,6 @@ from litestar import Controller, Request, get
 
 from .instances import Event
 from config import get_logger
-import logging
 
 logger = get_logger('eventsLog')
 
