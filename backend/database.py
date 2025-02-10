@@ -1,29 +1,28 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from typing import cast
+from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine
+
 from litestar import Litestar
 from pydantic import BaseModel as _BaseModel
 from litestar.params import Parameter
 from litestar.plugins.sqlalchemy import filters
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 
-from config import DATABASE_HOST, DATABASE_PORT, DATABASE_PASS, DATABASE_USER, DATABASE_DB
-
-
-DB_URI = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASS}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DB}"
-
-def get_db_connection(app: Litestar) -> AsyncEngine:
-    """Returns the db engine.
-
-    If it doesn't exist, creates it and saves it in on the application state object
-    """
-    if not getattr(app.state, "engine", None):
-        app.state.engine = create_async_engine(DB_URI)
-    return cast("AsyncEngine", app.state.engine)
+from config import DB_URI
 
 
-async def close_db_connection(app: Litestar) -> None:
-    """Closes the db connection stored in the application State object."""
-    if getattr(app.state, "engine", None):
-        await cast("AsyncEngine", app.state.engine).dispose()
+
+@asynccontextmanager
+async def db_connection(app: Litestar) -> AsyncGenerator[None, None]:
+    engine = getattr(app.state, "engine", None)
+    if engine is None:
+        engine = create_async_engine(DB_URI)
+        app.state.engine = engine
+    try:
+        yield
+    finally:
+        await engine.dispose()
 
 
 class BaseModel(_BaseModel):
@@ -52,3 +51,15 @@ async def provide_limit_offset_pagination(
         OFFSET to apply to select.
     """
     return filters.LimitOffset(page_size, page_size * (current_page - 1))
+
+
+# Dependency Provider for the session
+async def provide_db_session() -> Session:
+    """Dependency provider that returns a SQLAlchemy session."""
+    engine = create_engine(DB_URI)
+    local_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = local_session()
+    try:
+        yield db
+    finally:
+        db.close()

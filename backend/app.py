@@ -9,8 +9,8 @@ from notes.routers import notes_router
 from users.routers import users_router
 from vaults.routers import vaults_router
 from database import (
-    get_db_connection,
-    close_db_connection,
+    db_connection,
+    provide_db_session,
     provide_limit_offset_pagination,
 )
 
@@ -22,11 +22,10 @@ from litestar.middleware.base import DefineMiddleware
 
 from security.authentication_middleware import JWTAuthenticationMiddleware
 
-auth_mw = DefineMiddleware(JWTAuthenticationMiddleware, exclude="schema")
+auth_mw = DefineMiddleware(JWTAuthenticationMiddleware, exclude=["schema", "register"])
 
 app = Litestar(
-    on_startup=[get_db_connection],
-    on_shutdown=[close_db_connection],
+    lifespan=[db_connection],
     route_handlers=[events_router, notes_router, vaults_router, users_router],
     exception_handlers={
         ValidationException: validation_exception_handler,
@@ -35,7 +34,10 @@ app = Litestar(
     },
     middleware=[auth_mw],
     openapi_config=codsworth_openapi_config,
-    dependencies={"limit_offset": Provide(provide_limit_offset_pagination)},
+    dependencies={
+        "limit_offset": Provide(provide_limit_offset_pagination),
+        "db_session": Provide(provide_db_session),
+    },
 )
 
 

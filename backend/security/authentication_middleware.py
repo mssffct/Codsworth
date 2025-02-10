@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from users.instances import User
+from users.schemas import User
 from security.jwt import decode_jwt_token
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
