@@ -9,7 +9,6 @@ from notes.routers import notes_router
 from users.routers import users_router
 from vaults.routers import vaults_router
 from database import (
-    db_connection,
     provide_db_session,
     provide_limit_offset_pagination,
 )
@@ -25,7 +24,6 @@ from security.authentication_middleware import JWTAuthenticationMiddleware
 auth_mw = DefineMiddleware(JWTAuthenticationMiddleware, exclude=["schema", "register"])
 
 app = Litestar(
-    lifespan=[db_connection],
     route_handlers=[events_router, notes_router, vaults_router, users_router],
     exception_handlers={
         ValidationException: validation_exception_handler,

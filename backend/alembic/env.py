@@ -1,5 +1,4 @@
 import asyncio
-import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -17,16 +16,17 @@ config = context.config
 from config import DB_URI
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_URI", DB_URI)
+
+# TODO test database here
+config.set_main_option("sqlalchemy.url", DB_URI)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+from users.models import UserModel
+from database import Base
+
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

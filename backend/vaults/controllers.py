@@ -6,6 +6,6 @@ from .instances import Vault
 class VaultsController(Controller):
     path = "/vaults"
 
-    @get('/')
+    @get("/")
     async def list_vaults(self, request: Request) -> Vault:
         return Vault(id=1, name="test_vault")

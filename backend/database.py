@@ -1,33 +1,20 @@
-from contextlib import asynccontextmanager
-from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine
-
-from litestar import Litestar
 from pydantic import BaseModel as _BaseModel
 from litestar.params import Parameter
-from litestar.plugins.sqlalchemy import filters
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from litestar.plugins.sqlalchemy import filters, base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.declarative import declarative_base
 
 from config import DB_URI
 
 
-
-@asynccontextmanager
-async def db_connection(app: Litestar) -> AsyncGenerator[None, None]:
-    engine = getattr(app.state, "engine", None)
-    if engine is None:
-        engine = create_async_engine(DB_URI)
-        app.state.engine = engine
-    try:
-        yield
-    finally:
-        await engine.dispose()
-
-
 class BaseModel(_BaseModel):
     """Extend Pydantic's BaseModel to enable ORM mode"""
+
     model_config = {"from_attributes": True, "arbitrary_types_allowed": True}
+
+
+Base = declarative_base()
 
 
 async def provide_limit_offset_pagination(
@@ -53,13 +40,12 @@ async def provide_limit_offset_pagination(
     return filters.LimitOffset(page_size, page_size * (current_page - 1))
 
 
+engine = create_async_engine(DB_URI)
+async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
 # Dependency Provider for the session
-async def provide_db_session() -> Session:
-    """Dependency provider that returns a SQLAlchemy session."""
-    engine = create_engine(DB_URI)
-    local_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    db = local_session()
-    try:
-        yield db
-    finally:
-        db.close()
+async def provide_db_session():
+    """Dependency provider that returns a SQLAlchemy async session."""
+    async with async_session_maker() as session:
+        yield session

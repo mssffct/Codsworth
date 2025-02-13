@@ -1,22 +1,31 @@
+from uuid import uuid4
 from datetime import datetime
 from typing import Optional, Union
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, UUID
 from sqlalchemy.orm import mapped_column, Mapped
-from litestar.plugins.sqlalchemy import base, repository
+from litestar.plugins.sqlalchemy import repository
 from argon2 import PasswordHasher, Type as ArgonType
 from argon2.exceptions import VerificationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import Base
 
-class UserModel(base.UUIDBase):
+
+class UserModel(Base):
     __tablename__ = "user_account"  #  type: ignore[assignment]
 
+    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
     fullname: Mapped[Optional[str]] = mapped_column(String())
     email: Mapped[str] = mapped_column(String())
     password: Mapped[str] = mapped_column(String(), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+
+    def __init__(self, **kwargs):
+        if "unique_id" not in kwargs:
+            kwargs["unique_id"] = uuid4()
+        super().__init__(**kwargs)
 
     def set_password(self, value: Union[str, bytes]) -> None:
         if isinstance(value, str):
