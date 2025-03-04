@@ -1,6 +1,8 @@
 from uuid import uuid4
 from datetime import datetime
 from typing import Optional, Union
+
+from pydantic import SecretStr
 from sqlalchemy import String, Boolean, DateTime, UUID
 from sqlalchemy.orm import mapped_column, Mapped
 from litestar.plugins.sqlalchemy import repository
@@ -34,6 +36,8 @@ class UserModel(Base):
 
     def check_password(self, value):
         ph = PasswordHasher()  # Type is implicit in hash
+        if isinstance(value, SecretStr):
+            value = value.get_secret_value()
         try:
             ph.verify(self.password, value)
             return True

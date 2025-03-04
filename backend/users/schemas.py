@@ -1,4 +1,3 @@
-from sqlalchemy.dialects.postgresql import UUID
 from database import BaseModel
 from pydantic import EmailStr, SecretStr
 
@@ -14,6 +13,6 @@ class RegistrationSchema(BaseModel):
     password: SecretStr
 
 
-class UserLoginPayload(BaseModel):
+class UserLogin(BaseModel):
     email: EmailStr
     password: SecretStr

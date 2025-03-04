@@ -1,6 +1,7 @@
 import os
 import logging
 
+from datetime import timedelta
 from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 from litestar.openapi import OpenAPIConfig
@@ -22,8 +23,17 @@ DATABASE_DB = os.getenv("DB_NAME")
 
 DB_URI = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASS}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DB}"
 
-
+##
+# Authentication
+##
 JWT_SECRET = os.getenv("JWT_SECRET")
+AUTH_HEADER = "X_Auth_Token"
+COOKIE_NAME = "token"
+COOKIE_DOMAIN = None
+COOKIE_SECURE = False  # TODO set to True under https
+COOKIE_HTTP_ONLY = True
+COOKIE_SAMESITE = "lax"
+COOKIE_EXPIRE = timedelta(minutes=24 * 60)  # 1 day
 
 ##
 # OPENAPI

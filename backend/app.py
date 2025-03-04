@@ -1,41 +1,47 @@
 import uvicorn
 import sys
 
+from advanced_alchemy.extensions.litestar import SQLAlchemyInitPlugin
+from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+
 from config import API_PORT, API_HOST, codsworth_openapi_config
 from exceptions_handlers import *
 
 from events.routers import events_router
 from notes.routers import notes_router
-from users.routers import users_router
+from users.controllers import UsersController
 from vaults.routers import vaults_router
 from database import (
     provide_db_session,
-    provide_limit_offset_pagination,
 )
+from config import DB_URI
 
 from litestar import Litestar
 from litestar.di import Provide
 from litestar.exceptions import ValidationException, NotFoundException
 from litestar.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
-from litestar.middleware.base import DefineMiddleware
 
-from security.authentication_middleware import JWTAuthenticationMiddleware
+from security.jwt import jwt_cookie_auth
 
-auth_mw = DefineMiddleware(JWTAuthenticationMiddleware, exclude=["schema", "register"])
+
+sqlalchemy_config = SQLAlchemyAsyncConfig(
+    connection_string=DB_URI,
+    session_dependency_key="session",
+)
 
 app = Litestar(
-    route_handlers=[events_router, notes_router, vaults_router, users_router],
+    route_handlers=[events_router, notes_router, vaults_router, UsersController],
+    on_app_init=[jwt_cookie_auth.on_app_init],
     exception_handlers={
         ValidationException: validation_exception_handler,
         NotFoundException: not_found_handler,
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
     },
-    middleware=[auth_mw],
     openapi_config=codsworth_openapi_config,
     dependencies={
-        "limit_offset": Provide(provide_limit_offset_pagination),
         "db_session": Provide(provide_db_session),
     },
+    plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
 )
 
 
