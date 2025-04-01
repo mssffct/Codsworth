@@ -7,6 +7,11 @@ class User(BaseModel):
     email: EmailStr
 
 
+class UserInfo(BaseModel):
+    name: str
+    email: str
+
+
 class RegistrationSchema(BaseModel):
     name: str
     email: EmailStr

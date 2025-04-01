@@ -9,8 +9,9 @@ from litestar.status_codes import (
 )
 from litestar.exceptions import HTTPException, NotAuthorizedException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
-from .schemas import UserLogin, RegistrationSchema
+from .schemas import UserLogin, RegistrationSchema, UserInfo
 from .crud import get_user
 from config import COOKIE_NAME, COOKIE_DOMAIN
 from users.models import UserModel
@@ -26,7 +27,6 @@ class UsersController(Controller):
     ) -> dict | HTTPException:
         """Register new user"""
         try:
-            # TODO check unique username and email
             user = UserModel(email=data.email, name=data.name)
             user.set_password(data.password.get_secret_value())
             db_session.add(user)
@@ -35,14 +35,20 @@ class UsersController(Controller):
             return {
                 "message": "User registered successfully",
                 "user_id": user.unique_id,
+                "redirect": "/users/login",
             }
+        except IntegrityError:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail=f"User with {data.email} already exists!",
+            )
         except Exception as e:
             await db_session.rollback()
             raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
 
     @post("/login")
     async def login(self, data: UserLogin, db_session: AsyncSession) -> Redirect:
-        """Аутентифицирует пользователя и устанавливает JWT в Cookie."""
+        """Authorize user"""
         user = await get_user(db_session, data.email)
         if not user or not user.check_password(data.password):
             raise HTTPException(
@@ -54,21 +60,16 @@ class UsersController(Controller):
         )
         return response
 
-    @get("/protected")
-    async def protected(self, request: Request) -> dict:
-        """Защищенный эндпоинт, требующий аутентификации."""
+    @get("/me")
+    async def me(self, request: Request) -> UserInfo:
         user: UserModel | None = request.user
         if not user:
             raise NotAuthorizedException()
-        return {"message": f"Hello, {user.name}!", "user_id": user.unique_id}
-
-    @get("/")
-    async def home(self) -> dict:
-        return {"message": "Welcome!"}
+        return UserInfo(email=user.email, name=user.name)
 
     @get("/logout")
     async def logout(self, request: Request) -> Redirect:
-        """Удаляет Cookie с JWT."""
-        response = Redirect(path="/users/protected", status_code=HTTP_302_FOUND)
+        """Delete jwt cookie and redirects"""
+        response = Redirect(path="/users/me", status_code=HTTP_302_FOUND)
         response.delete_cookie(COOKIE_NAME, domain=COOKIE_DOMAIN)
         return response

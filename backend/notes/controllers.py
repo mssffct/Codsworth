@@ -2,7 +2,7 @@
 
 from litestar import Controller, Request, get
 
-from .instances import Note
+from .schemas import Note
 from config import get_logger
 
 logger = get_logger("notesLog", formatter="verbose")

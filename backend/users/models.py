@@ -19,7 +19,7 @@ class UserModel(Base):
     unique_id: Mapped[str] = mapped_column(UUID, primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
     fullname: Mapped[Optional[str]] = mapped_column(String())
-    email: Mapped[str] = mapped_column(String())
+    email: Mapped[str] = mapped_column(String(), unique=True)
     password: Mapped[str] = mapped_column(String(), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())

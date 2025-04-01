@@ -1,23 +1,35 @@
-import uuid
+import enum
 
 from typing import Optional
+from datetime import datetime
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import UUID, DateTime, Enum
 from sqlalchemy.orm import mapped_column, Mapped
 
 from users.models import UserModel
 from database import Base
 
 
-class Note(Base):
+class StatusEnum(enum.Enum):
+    """Statuses enum"""
+
+    actual = "actual"
+    done = "done"
+    expired = "expired"
+    to_delete = "to_delete"
+
+
+class NoteModel(Base):
     __tablename__ = "note"
 
-    id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), default=uuid.uuid4, primary_key=True
+    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True)
+    user: Mapped["UserModel"] = mapped_column(ForeignKey("user_account.unique_id"))
+    title: Mapped[str] = mapped_column(String(256))
+    content: Mapped[Optional[str]] = mapped_column(String())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    status: Mapped[str] = mapped_column(
+        Enum(StatusEnum), default=StatusEnum.actual, nullable=False
     )
-    # user: Mapped["UserModel"] = mapped_column(ForeignKey("user_account"))
-    title: Mapped[str] = mapped_column(String(30))
-    content: Mapped[Optional[str]]
 
     def __repr__(self) -> str:
-        return f"Note {self.title} owned by {self.user.id}"
+        return f"Note <<{self.title}>> status <<{self.status}>> owned by {self.user.id}"
