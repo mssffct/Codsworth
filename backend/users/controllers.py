@@ -9,10 +9,9 @@ from litestar.status_codes import (
 )
 from litestar.exceptions import HTTPException, NotAuthorizedException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
-from .schemas import UserLogin, RegistrationSchema, UserInfo
-from .crud import get_user
+from .schemas import UserLogin, RegistrationSchema, UserInfo, RegistrationSuccess
+from .crud import get_user, register_user
 from config import COOKIE_NAME, COOKIE_DOMAIN
 from users.models import UserModel
 from security.jwt import jwt_cookie_auth
@@ -24,27 +23,16 @@ class UsersController(Controller):
     @post("/register", status_code=HTTP_201_CREATED)
     async def register_user(
         self, db_session: AsyncSession, data: RegistrationSchema = Body()
-    ) -> dict | HTTPException:
+    ) -> RegistrationSuccess | HTTPException:
         """Register new user"""
         try:
-            user = UserModel(email=data.email, name=data.name)
-            user.set_password(data.password.get_secret_value())
-            db_session.add(user)
-            await db_session.commit()
-            await db_session.refresh(user)
-            return {
-                "message": "User registered successfully",
-                "user_id": user.unique_id,
-                "redirect": "/users/login",
-            }
-        except IntegrityError:
+            response = await register_user(db_session, data)
+            return response
+        except ValueError as e:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST,
-                detail=f"User with {data.email} already exists!",
+                detail=str(e),
             )
-        except Exception as e:
-            await db_session.rollback()
-            raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
 
     @post("/login")
     async def login(self, data: UserLogin, db_session: AsyncSession) -> Redirect:
