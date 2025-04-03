@@ -1,5 +1,7 @@
 import enum
 
+from uuid import uuid4
+
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import String, ForeignKey
@@ -22,7 +24,7 @@ class StatusEnum(enum.Enum):
 class NoteModel(Base):
     __tablename__ = "note"
 
-    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True)
+    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True, default=uuid4)
     user: Mapped["UserModel"] = mapped_column(ForeignKey("user_account.unique_id"))
     title: Mapped[str] = mapped_column(String(256))
     content: Mapped[Optional[str]] = mapped_column(String())
