@@ -1,7 +1,10 @@
 import enum
 
+from uuid import uuid4
+
 from typing import Optional
 from datetime import datetime
+
 from sqlalchemy import String, ForeignKey
 from sqlalchemy import UUID, DateTime, Enum
 from sqlalchemy.orm import mapped_column, Mapped
@@ -22,7 +25,7 @@ class StatusEnum(enum.Enum):
 class NoteModel(Base):
     __tablename__ = "note"
 
-    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True)
+    unique_id: Mapped[str] = mapped_column(UUID, primary_key=True, default=uuid4)
     user: Mapped["UserModel"] = mapped_column(ForeignKey("user_account.unique_id"))
     title: Mapped[str] = mapped_column(String(256))
     content: Mapped[Optional[str]] = mapped_column(String())
@@ -30,6 +33,7 @@ class NoteModel(Base):
     status: Mapped[str] = mapped_column(
         Enum(StatusEnum), default=StatusEnum.actual, nullable=False
     )
+    status_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     def __repr__(self) -> str:
         return f"Note <<{self.title}>> status <<{self.status}>> owned by {self.user.id}"

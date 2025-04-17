@@ -8,8 +8,8 @@ from config import API_PORT, API_HOST, codsworth_openapi_config
 from exceptions_handlers import *
 
 from events.routers import events_router
-from notes.routers import notes_router
 from users.controllers import UsersController
+from notes.controllers import NotesController
 from vaults.routers import vaults_router
 from database import (
     provide_db_session,
@@ -30,7 +30,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 )
 
 app = Litestar(
-    route_handlers=[events_router, notes_router, vaults_router, UsersController],
+    route_handlers=[events_router, NotesController, vaults_router, UsersController],
     on_app_init=[jwt_cookie_auth.on_app_init],
     exception_handlers={
         ValidationException: validation_exception_handler,

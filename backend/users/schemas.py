@@ -1,5 +1,5 @@
 from database import BaseModel
-from pydantic import EmailStr, SecretStr
+from pydantic import EmailStr, SecretStr, UUID4
 
 
 class User(BaseModel):
@@ -16,6 +16,12 @@ class RegistrationSchema(BaseModel):
     name: str
     email: EmailStr
     password: SecretStr
+
+
+class RegistrationSuccess(BaseModel):
+    message: str
+    user_id: UUID4
+    redirect: str
 
 
 class UserLogin(BaseModel):
