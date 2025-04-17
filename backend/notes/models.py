@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from typing import Optional
 from datetime import datetime
+
 from sqlalchemy import String, ForeignKey
 from sqlalchemy import UUID, DateTime, Enum
 from sqlalchemy.orm import mapped_column, Mapped
@@ -32,6 +33,7 @@ class NoteModel(Base):
     status: Mapped[str] = mapped_column(
         Enum(StatusEnum), default=StatusEnum.actual, nullable=False
     )
+    status_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     def __repr__(self) -> str:
         return f"Note <<{self.title}>> status <<{self.status}>> owned by {self.user.id}"
