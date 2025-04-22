@@ -20,3 +20,4 @@ class Note(BaseModel):
 class NoteCreate(BaseModel):
     title: str
     content: Optional[str]
+    status: Optional[StatusEnum]

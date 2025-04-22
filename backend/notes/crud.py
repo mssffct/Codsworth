@@ -7,6 +7,7 @@ from db_utils import atomic
 from .models import NoteModel, StatusEnum
 from .schemas import NoteCreate, Note
 from shared_schemas import Status
+from consts import UPDATE_SUCCESS, UPDATE_FAIL, DELETE_SUCCESS, CREATE_SUCCESS, DELETE_FAIL, RETRIEVE_FAIL
 
 
 async def get_notes(session: AsyncSession, user_id: uuid4) -> list[Note]:
@@ -30,18 +31,30 @@ async def retrieve_note(
     if note := result.one_or_none():
         return Note.model_validate(note.__dict__)
     else:
-        raise ValueError("Cannot retrieve note!")
+        raise ValueError(RETRIEVE_FAIL.format(item="note"))
 
 
 @atomic()
-async def create_note(
-    session: AsyncSession, data: NoteCreate, user_id: uuid4
+async def create_update_note(
+    session: AsyncSession, data: NoteCreate, user_id: uuid4, note_id: uuid4 = None
 ) -> str | ValueError:
-    note = NoteModel(
-        title=data.title, content=data.content, status=StatusEnum.actual, user=user_id
-    )
-    session.add(note)
-    return "Note created successfully"
+    if note_id:
+        filter_kwargs = {"unique_id": note_id, "user": str(user_id)}
+        query = update(NoteModel).filter_by(**filter_kwargs).values(**dict(data))
+        try:
+            await session.execute(query)
+            return UPDATE_SUCCESS.format(item="Note")
+        except Exception:
+            raise ValueError(UPDATE_FAIL.format(item="note"))
+    else:
+        note = NoteModel(
+            title=data.title,
+            content=data.content,
+            status=StatusEnum.actual,
+            user=user_id,
+        )
+        session.add(note)
+        return CREATE_SUCCESS.format(item="Note")
 
 
 @atomic()
@@ -56,6 +69,6 @@ async def move_note_to_trash(
     )
     try:
         await session.execute(query)
-        return "OK"
+        return DELETE_SUCCESS.format(item="Note")
     except Exception:
-        raise ValueError("Cannot delete note!")
+        raise ValueError(DELETE_FAIL.format(item="note"))

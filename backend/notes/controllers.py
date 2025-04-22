@@ -1,5 +1,5 @@
 from uuid import UUID
-from litestar import Controller, Request, get, post, delete
+from litestar import Controller, Request, get, post, delete, patch
 from litestar.exceptions import HTTPException
 from litestar.params import Body
 from litestar.status_codes import (
@@ -10,7 +10,7 @@ from litestar.status_codes import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .schemas import Note, NoteCreate
-from .crud import get_notes, create_note, move_note_to_trash, retrieve_note
+from .crud import get_notes, create_update_note, move_note_to_trash, retrieve_note
 from config import get_logger
 
 logger = get_logger("notesLog", formatter="verbose")
@@ -47,8 +47,23 @@ class NotesController(Controller):
         self, db_session: AsyncSession, request: Request, data: NoteCreate = Body()
     ) -> str | HTTPException:
         try:
-            response = await create_note(
+            response = await create_update_note(
                 session=db_session, data=data, user_id=request.user.unique_id
+            )
+            return response
+        except ValueError as e:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+
+    @patch("/{note_id:uuid}")
+    async def patch_note(
+        self, db_session: AsyncSession, request: Request, note_id: UUID, data: NoteCreate = Body()
+    ) -> str | HTTPException:
+        try:
+            response = await create_update_note(
+                session=db_session, data=data, user_id=request.user.unique_id, note_id=note_id
             )
             return response
         except ValueError as e:
