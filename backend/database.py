@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyInitPlugin
 from pydantic import BaseModel as _BaseModel
-from litestar.exceptions import ImproperlyConfiguredException
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base

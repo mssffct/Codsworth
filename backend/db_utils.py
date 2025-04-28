@@ -1,9 +1,13 @@
-from typing import TypeVar, ParamSpec, Callable
+import asyncio
+import datetime
 
+from typing import TypeVar, ParamSpec, Callable
+from litestar import Litestar
 from sqlalchemy.ext.asyncio import AsyncSession
 from inspect import signature
 from functools import wraps
 
+from config import AppState
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -28,3 +32,21 @@ def atomic(
         return wrapped_func
 
     return decorator
+
+
+async def run_periodic_cleanup(app: Litestar) -> None:
+    """Запускает задачу cleanup_database с заданным интервалом."""
+    while True:
+      async with app.state.db_session_maker() as db_session:  # Create a new session for each run
+          app_state: AppState = app.state  # type: ignore
+          app_state = AppState(interval=600, to_keep=datetime.timedelta(days=7))
+          await cleanup_database(db_session, app_state)
+          await asyncio.sleep(app_state.interval)
+
+
+async def cleanup_database(db_session: AsyncSession, app_state: AppState):
+    print(db_session, app_state)
+
+
+def create_trash_collector(app: Litestar) -> None:
+    app.add_background_task(run_periodic_cleanup(app))

@@ -1,5 +1,6 @@
 import os
 import logging
+import datetime
 
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -113,3 +114,12 @@ def get_logger(
     logger.setLevel(level)
     logger.addHandler(handler)
     return logger
+
+
+class AppState:
+    to_keep: datetime.timedelta
+    interval: int
+
+    def __init__(self, to_keep: datetime.timedelta, interval: int) -> None:
+        self.to_keep = to_keep
+        self.interval = interval

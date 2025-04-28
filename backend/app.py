@@ -3,8 +3,8 @@ import sys
 
 from advanced_alchemy.extensions.litestar import SQLAlchemyInitPlugin
 from advanced_alchemy.extensions.litestar.plugins import SQLAlchemyAsyncConfig
+from litestar.datastructures import State
 
-from config import API_PORT, API_HOST, codsworth_openapi_config
 from exceptions_handlers import *
 
 from events.routers import events_router
@@ -14,7 +14,8 @@ from vaults.routers import vaults_router
 from database import (
     provide_db_session,
 )
-from config import DB_URI
+from db_utils import create_trash_collector
+from config import API_PORT, API_HOST, codsworth_openapi_config, DB_URI
 
 from litestar import Litestar
 from litestar.di import Provide
@@ -31,7 +32,7 @@ sqlalchemy_config = SQLAlchemyAsyncConfig(
 
 app = Litestar(
     route_handlers=[events_router, NotesController, vaults_router, UsersController],
-    on_app_init=[jwt_cookie_auth.on_app_init],
+    on_app_init=[jwt_cookie_auth.on_app_init, lambda app: create_trash_collector(app)],
     exception_handlers={
         ValidationException: validation_exception_handler,
         NotFoundException: not_found_handler,
@@ -41,6 +42,7 @@ app = Litestar(
     dependencies={
         "db_session": Provide(provide_db_session),
     },
+    state=State(),
     plugins=[SQLAlchemyInitPlugin(config=sqlalchemy_config)],
 )
 
